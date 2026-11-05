@@ -13,8 +13,11 @@ Each entry uses the same format:
 
 ## Manual changes (outside AI assistance)
 
-- November 4, 2026 — Manually edited notes in `PROMPT_LOG.md`.
-- No manual application-code changes recorded.
+- Set up the GitHub repository, connected it to my local project, resolved the initial Git history conflict, and pushed the backend.
+- Tested the backend API by hand with curl.
+- Tested the frontend in my browser and noticed the AMZN volume looked too high, which led us to investigate the data.
+- Edited `PROMPT_LOG.md` for readability.
+- Cloned the finished repository from GitHub and followed the README to test the app on its own.
 
 ---
 
