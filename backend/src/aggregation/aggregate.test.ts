@@ -119,6 +119,23 @@ describe('aggregateDailyData', () => {
     expect(aggregateDailyData([], 'America/New_York')).toEqual([]);
   });
 
+  it('returns null volume for a day with valid prices but no reported volume', () => {
+    const timeZone = 'America/New_York';
+
+    // Lows and highs are present (so the day is kept), but every volume is null.
+    // Volume should be null ("unknown"), not 0 ("no shares traded").
+    const bars: IntradayBar[] = [
+      { timestamp: utc(13, 30), low: 100, high: 110, volume: null },
+      { timestamp: utc(13, 45), low: 102, high: 112, volume: null },
+    ];
+
+    const result = aggregateDailyData(bars, timeZone);
+
+    expect(result).toEqual([
+      { day: '2026-10-05', lowAverage: 101, highAverage: 111, volume: null },
+    ]);
+  });
+
   it('omits a day that has no valid lows or no valid highs', () => {
     const timeZone = 'America/New_York';
 

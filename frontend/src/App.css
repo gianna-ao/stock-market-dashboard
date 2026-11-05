@@ -1,0 +1,114 @@
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  box-sizing: border-box;
+}
+
+.app-header h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+}
+
+.app-header p {
+  margin: 0 0 20px;
+  color: var(--text);
+}
+
+/* Search */
+.symbol-search {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.symbol-search input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.symbol-search input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.symbol-search button {
+  padding: 10px 20px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.symbol-search button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* State messages */
+.app-main {
+  margin-top: 28px;
+}
+
+.message {
+  color: var(--text);
+  padding: 8px 0;
+}
+
+.message-error {
+  color: #d03b3b;
+}
+
+/* Results */
+.results-heading {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+.chart {
+  margin: 0 0 28px;
+}
+
+.chart figcaption {
+  font-weight: 600;
+  color: var(--text-h);
+  margin-bottom: 8px;
+}
+
+/* Table */
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-table th,
+.stock-table td {
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+
+.stock-table th:first-child,
+.stock-table td:first-child {
+  text-align: left;
+}
+
+.stock-table th {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom: 2px solid var(--border);
+}
+
+.stock-table td {
+  color: var(--text-h);
+}

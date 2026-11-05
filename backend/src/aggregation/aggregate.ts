@@ -8,8 +8,8 @@ export interface DailyAggregate {
   lowAverage: number;
   /** Mean of the day's non-null bar highs (full precision). */
   highAverage: number;
-  /** Sum of the day's non-null bar volumes. */
-  volume: number;
+  /** Sum of the day's non-null bar volumes; null when no bar reported volume. */
+  volume: number | null;
 }
 
 /**
@@ -19,17 +19,28 @@ export interface DailyAggregate {
  * Low, high, and volume are handled independently: each average/sum uses only
  * that field's valid (non-null, finite) values, so one missing field does not
  * discard the others. A day is omitted if it has no valid lows or no valid highs,
- * because then at least one average would be undefined. Values are returned at
- * full precision; rounding is a presentation concern for the frontend.
+ * because then at least one average would be undefined. Volume is the sum of the
+ * day's present values, or null when no bar reported volume at all (null means
+ * "unknown", which is deliberately distinct from a true zero). Values are returned
+ * at full precision; rounding is a presentation concern for the frontend.
  */
 export function aggregateDailyData(
   bars: IntradayBar[],
   timeZone: string,
 ): DailyAggregate[] {
+  // One formatter for the whole call — constructing Intl.DateTimeFormat is costly,
+  // so we reuse it across every bar rather than rebuilding it per timestamp.
+  const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
   // Group bars by their exchange-local calendar day.
   const barsByDay = new Map<string, IntradayBar[]>();
   for (const bar of bars) {
-    const day = toExchangeDate(bar.timestamp, timeZone);
+    const day = toExchangeDate(bar.timestamp, dateFormatter);
     const group = barsByDay.get(day);
     if (group) {
       group.push(bar);
@@ -53,7 +64,8 @@ export function aggregateDailyData(
       day,
       lowAverage: average(lows),
       highAverage: average(highs),
-      volume: sum(volumes),
+      // null = no volume reported that day; distinct from a genuine zero.
+      volume: volumes.length === 0 ? null : sum(volumes),
     });
   }
 
@@ -76,17 +88,15 @@ function average(values: number[]): number {
 }
 
 /**
- * Formats an epoch-seconds timestamp as a YYYY-MM-DD calendar date in the given
- * IANA timezone. Uses Intl (built in, DST-aware) so the day boundary matches the
- * exchange's local date rather than UTC.
+ * Formats an epoch-seconds timestamp as a YYYY-MM-DD calendar date using the given
+ * (DST-aware) formatter, so the day boundary matches the exchange's local date
+ * rather than UTC. The formatter is created once per call and reused across bars.
  */
-function toExchangeDate(epochSeconds: number, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date(epochSeconds * 1000));
+function toExchangeDate(
+  epochSeconds: number,
+  formatter: Intl.DateTimeFormat,
+): string {
+  const parts = formatter.formatToParts(new Date(epochSeconds * 1000));
 
   const get = (type: 'year' | 'month' | 'day'): string =>
     parts.find((part) => part.type === type)!.value;

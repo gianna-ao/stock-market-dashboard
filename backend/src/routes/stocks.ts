@@ -7,13 +7,16 @@ import { aggregateDailyData } from '../aggregation/aggregate.js';
 /**
  * Route-level symbol validation (per the agreed separation of concerns). Accepts the
  * characters real Yahoo tickers use — letters, digits, and `.` `-` `^` `=`
- * (e.g. BRK-B, ^GSPC, EURUSD=X) — and bounds the length.
+ * (e.g. BRK-B, ^GSPC, EURUSD=X) — and bounds the length. The cap is 20 rather than 10
+ * so exchange-suffixed symbols (e.g. RELIANCE.NS) aren't wrongly rejected as malformed,
+ * while still rejecting obviously bogus input. Yahoo remains the source of truth for
+ * whether a well-formed symbol actually exists.
  */
 const symbolSchema = z
   .string()
   .trim()
   .min(1)
-  .max(10)
+  .max(20)
   .regex(/^[A-Za-z0-9.^=-]+$/);
 
 export interface StocksRouterDeps {

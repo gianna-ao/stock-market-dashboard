@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../app.js';
 import type { YahooClient } from '../yahoo/yahoo-client.js';
@@ -67,21 +67,49 @@ describe('GET /api/stocks/:symbol/daily', () => {
   });
 
   it('maps UpstreamError to 502', async () => {
+    // The handler logs upstream failures; silence that for clean test output.
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const app = createApp({ yahooClient: clientThrowing(new UpstreamError('boom')) });
 
     const res = await request(app).get('/api/stocks/AAPL/daily');
 
     expect(res.status).toBe(502);
     expect(res.body).toHaveProperty('error');
+    errorSpy.mockRestore();
   });
 
-  it('returns 400 for a malformed symbol without calling the client', async () => {
+  it('returns 400 for an over-length symbol without calling the client', async () => {
     const app = createApp({
       yahooClient: clientThrowing(new Error('client should not be called')),
     });
 
-    const res = await request(app).get('/api/stocks/TOOLONGSYMBOL/daily');
+    const res = await request(app).get(`/api/stocks/${'A'.repeat(21)}/daily`);
 
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for a symbol with illegal characters', async () => {
+    const app = createApp({
+      yahooClient: clientThrowing(new Error('client should not be called')),
+    });
+
+    const res = await request(app).get(`/api/stocks/${encodeURIComponent('A A')}/daily`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts an exchange-suffixed symbol (e.g. RELIANCE.NS) and queries it', async () => {
+    const bars: IntradayBar[] = [
+      { timestamp: epochUtc(2026, 9, 5, 13, 30), low: 100, high: 110, volume: 1000 },
+    ];
+    const now = () => epochUtc(2026, 9, 5, 14, 5);
+    const app = createApp({ yahooClient: clientReturning(bars), now });
+
+    const res = await request(app).get('/api/stocks/RELIANCE.NS/daily');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      { day: '2026-10-05', lowAverage: 100, highAverage: 110, volume: 1000 },
+    ]);
   });
 });

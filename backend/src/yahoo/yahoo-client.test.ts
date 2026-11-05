@@ -31,6 +31,21 @@ describe('createYahooClient.fetchIntraday', () => {
       ]);
     });
 
+    it('requests regular-session 15-minute data for the last month', async () => {
+      let requestedUrl = '';
+      const client = createYahooClient(async (url) => {
+        requestedUrl = url;
+        return jsonResponse(aaplChartResponse);
+      });
+
+      await client.fetchIntraday('AAPL');
+
+      expect(requestedUrl).toContain('/AAPL?');
+      expect(requestedUrl).toContain('interval=15m');
+      expect(requestedUrl).toContain('range=1mo');
+      expect(requestedUrl).toContain('includePrePost=false');
+    });
+
     it('returns an empty bar list when the symbol has no intraday data', async () => {
       const body = {
         chart: {
@@ -97,6 +112,20 @@ describe('createYahooClient.fetchIntraday', () => {
 
     it('throws UpstreamError when the response shape is malformed', async () => {
       const body = { chart: { result: [{ meta: {} }], error: null } }; // missing exchangeTimezoneName
+      const client = createYahooClient(fetchReturning(body));
+
+      await expect(client.fetchIntraday('AAPL')).rejects.toBeInstanceOf(UpstreamError);
+    });
+
+    it('throws UpstreamError when timestamps are present but quote data is missing', async () => {
+      const body = {
+        chart: {
+          result: [
+            { meta: { exchangeTimezoneName: 'America/New_York' }, timestamp: [1, 2, 3] },
+          ],
+          error: null,
+        },
+      };
       const client = createYahooClient(fetchReturning(body));
 
       await expect(client.fetchIntraday('AAPL')).rejects.toBeInstanceOf(UpstreamError);

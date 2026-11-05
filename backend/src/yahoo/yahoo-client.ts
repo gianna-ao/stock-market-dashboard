@@ -44,7 +44,10 @@ export function createYahooClient(
 }
 
 function buildUrl(symbol: string): string {
-  return `${CHART_BASE_URL}/${encodeURIComponent(symbol)}?interval=${INTERVAL}&range=${RANGE}`;
+  // includePrePost=false restricts the result to the regular trading session, so
+  // pre/post-market bars can never skew the daily averages or volume. We set it
+  // explicitly rather than relying on Yahoo's default.
+  return `${CHART_BASE_URL}/${encodeURIComponent(symbol)}?interval=${INTERVAL}&range=${RANGE}&includePrePost=false`;
 }
 
 /** Performs the HTTP request with a timeout and maps transport/status failures. */
